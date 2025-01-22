@@ -51,40 +51,58 @@ Authorization: Bearer B
 
 ## Endpoints Disponíveis
 
-### 1. Listar Todos os Países
+### 1. Login
+- **Endpoint**: POST /api/login
+- **Parâmetros**: 
+  - **Body**: 
+    - username
+    - password
+- **Autenticação**: Não necessária
+- **Exemplo**: `http://localhost:3000/api/login`
+
+### 2. Registar
+- **Endpoint**: POST /api/register
+- **Parâmetros**: 
+  - **Body**: 
+    - username
+    - password
+- **Autenticação**: Não necessária
+- **Exemplo**: `http://localhost:3000/api/register`
+
+### 3. Listar Todos os Países
 - **Endpoint**: GET /api/countries
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries`
 
-### 2. Obter Países por Continente
+### 4. Obter Países por Continente
 - **Endpoint**: GET /api/countries/continent/{continent}
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/continent/Europe`
 
-### 3. Pesquisar por Idioma
+### 5. Pesquisar por Idioma
 - **Endpoint**: GET /api/countries/language
 - **Parâmetros Query**: language
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/language?language=Portuguese`
 
-### 4. Pesquisar por Capital
+### 6. Pesquisar por Capital
 - **Endpoint**: GET /api/countries/capital
 - **Parâmetros Query**: capital
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/capital?capital=Lisbon`
 
-### 5. Pesquisar por Moeda
+### 7. Pesquisar por Moeda
 - **Endpoint**: GET /api/countries/currency
 - **Parâmetros Query**: currency
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/currency?currency=EUR`
 
-### 6. Pesquisar População por País
+### 8. Pesquisar População por País
 - **Endpoint**: GET /api/population/{country}
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/population/30`
 
-### 7. Pesquisar País por Código
+### 9. Pesquisar País por Código
 - **Endpoint**: GET /api/countries/{alpha2_code}
 - **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/PT`
