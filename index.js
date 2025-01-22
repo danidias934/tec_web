@@ -1,9 +1,11 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const bodyParser = require('body-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swaggerConfig');
+
 // const cors = require('cors');
 // const dotenv = require('dotenv');
-
 // dotenv.config();
 
 const app = express();
@@ -38,7 +40,7 @@ BigInt.prototype.toJSON = function () { return Number(this) }
  * /api/countries:
  *   get:
  *     summary: Recupera uma lista de todos os países
- *     description: Este endpoint retorna todos os países registrados na base de dados.
+ *     description: Este endpoint retorna uma lista de todos os países registrados.
  *     responses:
  *       200:
  *         description: Lista de países
@@ -51,22 +53,27 @@ BigInt.prototype.toJSON = function () { return Number(this) }
  *                 properties:
  *                   id:
  *                     type: integer
- *                     description: ID único do país.
+ *                     description: ID único do país
  *                   name:
  *                     type: string
- *                     description: Nome do país.
+ *                     description: Nome do país
  *                   code:
  *                     type: string
- *                     description: Código do país (ISO 3166-1).
+ *                     description: Código do país (ISO 3166-1)
+ *                   continent:
+ *                     type: string
+ *                     description: Continente ao qual o país pertence
  *               example:
  *                 - id: 1
  *                   name: Portugal
  *                   code: PT
+ *                   continent: Europe
  *                 - id: 2
  *                   name: Brasil
  *                   code: BR
- *       500:
- *         description: Erro no servidor ao buscar a lista de países.
+ *                   continent: South America
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
  *         content:
  *           application/json:
  *             schema:
@@ -74,7 +81,17 @@ BigInt.prototype.toJSON = function () { return Number(this) }
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Erro ao recuperar países"
+ *                   example: "Token is required"
+ *       500:
+ *         description: Erro no servidor ao buscar os países.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Erro interno do servidor"
  */
 app.get('/api/countries', needToBeAutenticated, async (req, res) => {
     const countries = await prisma.country.findMany();
@@ -92,10 +109,10 @@ app.get('/api/countries', needToBeAutenticated, async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: continent
- *         required: true
- *         description: O continente pelo qual filtrar os países (ex: 'Africa', 'Asia').
  *         schema:
  *           type: string
+ *         required: true
+ *         description: O continente pelo qual filtrar os países.
  *     responses:
  *       200:
  *         description: Lista de países do continente solicitado
@@ -137,6 +154,16 @@ app.get('/api/countries', needToBeAutenticated, async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "Continente inválido"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar os países.
  *         content:
@@ -162,15 +189,15 @@ app.get('/api/countries/continent/:continent', needToBeAutenticated, async (req,
  * @swagger
  * /api/countries/language:
  *   get:
- *     summary: Recupera uma lista de países filtrados por idioma
- *     description: Este endpoint retorna uma lista de países que falam o idioma fornecido como parâmetro de consulta.
+ *     summary: Recupera uma lista de países por idioma
+ *     description: Este endpoint retorna uma lista de países que falam o idioma fornecido.
  *     parameters:
  *       - in: query
  *         name: language
  *         required: true
- *         description: O idioma pelo qual filtrar os países (ex: 'Portuguese', 'English').
  *         schema:
  *           type: string
+ *         description: O idioma pelo qual filtrar os países.
  *     responses:
  *       200:
  *         description: Lista de países que falam o idioma solicitado
@@ -190,24 +217,20 @@ app.get('/api/countries/continent/:continent', needToBeAutenticated, async (req,
  *                   code:
  *                     type: string
  *                     description: Código do país (ISO 3166-1).
- *                   languages:
- *                     type: array
- *                     items:
- *                       type: string
- *                     description: Lista de idiomas falados no país.
+ *                   language:
+ *                     type: string
+ *                     description: Idioma falado pelo país.
  *               example:
  *                 - id: 1
  *                   name: Portugal
  *                   code: PT
- *                   languages:
- *                     - Portuguese
+ *                   language: Portuguese
  *                 - id: 2
  *                   name: Brasil
  *                   code: BR
- *                   languages:
- *                     - Portuguese
+ *                   language: Portuguese
  *       400:
- *         description: Idioma não fornecido ou inválido.
+ *         description: Idioma inválido ou não encontrado.
  *         content:
  *           application/json:
  *             schema:
@@ -215,7 +238,17 @@ app.get('/api/countries/continent/:continent', needToBeAutenticated, async (req,
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Idioma não fornecido"
+ *                   example: "Idioma inválido"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar os países.
  *         content:
@@ -241,18 +274,18 @@ app.get('/api/countries/language', needToBeAutenticated, async (req, res) => {
  * @swagger
  * /api/countries/capital:
  *   get:
- *     summary: Recupera uma lista de países filtrados pela capital
- *     description: Este endpoint retorna uma lista de países cuja capital corresponde ao valor fornecido como parâmetro de consulta.
+ *     summary: Recupera uma lista de países por capital
+ *     description: Este endpoint retorna uma lista de países com base na capital fornecida.
  *     parameters:
  *       - in: query
  *         name: capital
  *         required: true
- *         description: O nome da capital para filtrar os países (ex: 'Lisbon', 'Brasília').
  *         schema:
  *           type: string
+ *         description: O nome da capital pelo qual filtrar os países.
  *     responses:
  *       200:
- *         description: Lista de países com a capital solicitada
+ *         description: Lista de países que têm a capital solicitada
  *         content:
  *           application/json:
  *             schema:
@@ -282,7 +315,7 @@ app.get('/api/countries/language', needToBeAutenticated, async (req, res) => {
  *                   code: BR
  *                   capital: Brasília
  *       400:
- *         description: Capital não fornecida ou inválida.
+ *         description: Capital inválida ou não encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -290,7 +323,17 @@ app.get('/api/countries/language', needToBeAutenticated, async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Capital não fornecida"
+ *                   example: "Capital inválida"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar os países.
  *         content:
@@ -313,23 +356,22 @@ app.get('/api/countries/capital', needToBeAutenticated, async (req, res) => {
     res.json(countries);
 });
 
-
 /**
  * @swagger
  * /api/countries/currency:
  *   get:
- *     summary: Recupera uma lista de países filtrados pela moeda
- *     description: Este endpoint retorna uma lista de países que utilizam a moeda fornecida como parâmetro de consulta.
+ *     summary: Recupera uma lista de países por moeda
+ *     description: Este endpoint retorna uma lista de países que utilizam a moeda fornecida.
  *     parameters:
  *       - in: query
  *         name: currency
  *         required: true
- *         description: O nome da moeda para filtrar os países (ex: 'EUR', 'USD').
  *         schema:
  *           type: string
+ *         description: O nome da moeda pelo qual filtrar os países.
  *     responses:
  *       200:
- *         description: Lista de países com a moeda solicitada
+ *         description: Lista de países que utilizam a moeda solicitada
  *         content:
  *           application/json:
  *             schema:
@@ -355,11 +397,11 @@ app.get('/api/countries/capital', needToBeAutenticated, async (req, res) => {
  *                   code: PT
  *                   currency: EUR
  *                 - id: 2
- *                   name: Estados Unidos
- *                   code: US
- *                   currency: USD
+ *                   name: Brasil
+ *                   code: BR
+ *                   currency: BRL
  *       400:
- *         description: Moeda não fornecida ou inválida.
+ *         description: Moeda inválida ou não encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -367,7 +409,17 @@ app.get('/api/countries/capital', needToBeAutenticated, async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Moeda não fornecida"
+ *                   example: "Moeda inválida"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar os países.
  *         content:
@@ -393,15 +445,15 @@ app.get('/api/countries/currency', needToBeAutenticated, async (req, res) => {
  * @swagger
  * /api/countries/population/{population}:
  *   get:
- *     summary: Recupera uma lista de países filtrados pela população
- *     description: Este endpoint retorna uma lista de países cuja população corresponde ao valor fornecido no parâmetro de URL.
+ *     summary: Recupera uma lista de países por população
+ *     description: Este endpoint retorna uma lista de países com a população fornecida.
  *     parameters:
  *       - in: path
  *         name: population
  *         required: true
- *         description: O valor da população para filtrar os países (ex: '1000000', '50000000').
  *         schema:
  *           type: integer
+ *         description: A população pelo qual filtrar os países.
  *     responses:
  *       200:
  *         description: Lista de países com a população solicitada
@@ -434,7 +486,7 @@ app.get('/api/countries/currency', needToBeAutenticated, async (req, res) => {
  *                   code: BR
  *                   population: 211000000
  *       400:
- *         description: População não fornecida ou inválida.
+ *         description: População inválida ou não encontrada.
  *         content:
  *           application/json:
  *             schema:
@@ -442,7 +494,17 @@ app.get('/api/countries/currency', needToBeAutenticated, async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "População não fornecida"
+ *                   example: "População inválida"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar os países.
  *         content:
@@ -464,23 +526,22 @@ app.get('/api/countries/population/:population', needToBeAutenticated, async (re
     res.json(countries);    
 });
 
-
 /**
  * @swagger
  * /api/population/{country}:
  *   get:
- *     summary: Recupera informações sobre um país filtrado pelo nome
- *     description: Este endpoint retorna as informações de um país com base no nome fornecido no parâmetro de URL.
+ *     summary: Recupera informações sobre um país baseado no nome
+ *     description: Este endpoint retorna as informações de um país com base no nome fornecido.
  *     parameters:
  *       - in: path
  *         name: country
  *         required: true
- *         description: O nome do país para buscar as informações (ex: 'Portugal', 'Brasil').
  *         schema:
  *           type: string
+ *         description: O nome do país para buscar as informações.
  *     responses:
  *       200:
- *         description: Detalhes do país solicitado
+ *         description: Informações do país solicitado
  *         content:
  *           application/json:
  *             schema:
@@ -495,20 +556,24 @@ app.get('/api/countries/population/:population', needToBeAutenticated, async (re
  *                 code:
  *                   type: string
  *                   description: Código do país (ISO 3166-1).
+ *                 capital:
+ *                   type: string
+ *                   description: Nome da capital do país.
  *                 population:
  *                   type: integer
  *                   description: População do país.
- *                 capital:
+ *                 continent:
  *                   type: string
- *                   description: Capital do país.
+ *                   description: Continente ao qual o país pertence.
  *               example:
  *                 id: 1
  *                 name: Portugal
  *                 code: PT
+ *                 capital: Lisbon
  *                 population: 10000000
- *                 capital: Lisboa
- *       404:
- *         description: País não encontrado.
+ *                 continent: Europe
+ *       400:
+ *         description: País não encontrado ou nome inválido.
  *         content:
  *           application/json:
  *             schema:
@@ -517,6 +582,16 @@ app.get('/api/countries/population/:population', needToBeAutenticated, async (re
  *                 message:
  *                   type: string
  *                   example: "País não encontrado"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar o país.
  *         content:
@@ -526,7 +601,7 @@ app.get('/api/countries/population/:population', needToBeAutenticated, async (re
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Erro ao recuperar o país"
+ *                   example: "Erro ao recuperar país"
  */
 app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
     let country = req.params.country;
@@ -542,18 +617,18 @@ app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
  * @swagger
  * /api/countries/{id}:
  *   get:
- *     summary: Recupera informações de um país pelo código alpha2
- *     description: Este endpoint retorna as informações de um país baseado no código `alpha2_code` fornecido no parâmetro de URL.
+ *     summary: Recupera informações de um país com base no código alpha2
+ *     description: Este endpoint retorna as informações de um país com base no código alpha2 fornecido.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: O código alpha2 do país (ex: 'PT' para Portugal, 'BR' para Brasil).
  *         schema:
  *           type: string
+ *         description: O código alpha2 do país.
  *     responses:
  *       200:
- *         description: Detalhes do país solicitado
+ *         description: Informações do país solicitado
  *         content:
  *           application/json:
  *             schema:
@@ -567,21 +642,25 @@ app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
  *                   description: Nome do país.
  *                 code:
  *                   type: string
- *                   description: Código ISO 3166-1 alpha-2 do país.
+ *                   description: Código do país (ISO 3166-1).
+ *                 capital:
+ *                   type: string
+ *                   description: Nome da capital do país.
  *                 population:
  *                   type: integer
  *                   description: População do país.
- *                 capital:
+ *                 continent:
  *                   type: string
- *                   description: Capital do país.
+ *                   description: Continente ao qual o país pertence.
  *               example:
  *                 id: 1
  *                 name: Portugal
  *                 code: PT
+ *                 capital: Lisbon
  *                 population: 10000000
- *                 capital: Lisboa
- *       404:
- *         description: País não encontrado.
+ *                 continent: Europe
+ *       400:
+ *         description: País não encontrado ou código inválido.
  *         content:
  *           application/json:
  *             schema:
@@ -590,6 +669,16 @@ app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "País não encontrado"
+ *       401:
+ *         description: Não autorizado. Token não fornecido ou inválido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token is required"
  *       500:
  *         description: Erro no servidor ao buscar o país.
  *         content:
@@ -599,7 +688,7 @@ app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Erro ao recuperar o país"
+ *                   example: "Erro ao recuperar país"
  */
 app.get('/api/countries/:id', needToBeAutenticated, async (req, res) => {
     const id = req.params.id;
@@ -611,12 +700,8 @@ app.get('/api/countries/:id', needToBeAutenticated, async (req, res) => {
     res.json(country);
 });
 
-
-app.get('/', needToBeAutenticated, (req, res) => {
-    res.send('Hello World');
-});
-
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
