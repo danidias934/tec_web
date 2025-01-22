@@ -15,6 +15,49 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 BigInt.prototype.toJSON = function () { return Number(this) }
 
+/**
+ * @swagger
+ * /api/countries:
+ *   get:
+ *     summary: Recupera uma lista de todos os países
+ *     description: Este endpoint retorna todos os países registrados na base de dados.
+ *     responses:
+ *       200:
+ *         description: Lista de países
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: ID único do país.
+ *                   name:
+ *                     type: string
+ *                     description: Nome do país.
+ *                   code:
+ *                     type: string
+ *                     description: Código do país (ISO 3166-1).
+ *               example:
+ *                 - id: 1
+ *                   name: Portugal
+ *                   code: PT
+ *                 - id: 2
+ *                   name: Brasil
+ *                   code: BR
+ *       500:
+ *         description: Erro no servidor ao buscar a lista de países.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Erro ao recuperar países"
+ */
 app.get('/api/countries', async (req, res) => {
     const countries = await prisma.country.findMany();
     console.log(countries);
