@@ -16,6 +16,63 @@ const prisma = new PrismaClient();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Login a user
+ *     description: Authenticates a user by verifying the username and password, and returns a token on successful login.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: The username of the user attempting to log in.
+ *               password:
+ *                 type: string
+ *                 description: The password of the user attempting to log in.
+ *             required:
+ *               - username
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Login successful, returns a token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Login successful"
+ *                 token:
+ *                   type: string
+ *                   description: JWT token that can be used for authentication in subsequent requests.
+ *       401:
+ *         description: Invalid username or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid username or password"
+ *       500:
+ *         description: Internal server error during login process.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error occurred while processing login"
+ */
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await prisma.user.findUnique({ where: { username } });
@@ -25,6 +82,70 @@ app.post('/api/login', async (req, res) => {
     res.json({ message: 'Login successful', token: jwt.sign({ username }, 'secret', { expiresIn: '1h' }) });
 });
 
+
+/**
+ * @swagger
+ * /api/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Creates a new user with a username and password.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: The username of the user.
+ *               password:
+ *                 type: string
+ *                 description: The password of the user.
+ *             required:
+ *               - username
+ *               - password
+ *     responses:
+ *       200:
+ *         description: User successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User created"
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       description: Unique ID of the user.
+ *                     username:
+ *                       type: string
+ *                       description: The username of the created user.
+ *       400:
+ *         description: Bad request, missing or invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bad request, please check your input"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Error occurred while creating user"
+ */
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     const user = await prisma.user.create({ data: { username, password } });
