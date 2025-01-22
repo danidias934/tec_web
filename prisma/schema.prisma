@@ -23,3 +23,8 @@ model country {
   populacao   BigInt
   continente  String   @db.VarChar(255)
 }
+
+model user {
+  username  String   @unique @id
+  password  String
+}

@@ -3,6 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const bodyParser = require('body-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swaggerConfig');
+const jwt = require('jsonwebtoken');
 
 // const cors = require('cors');
 // const dotenv = require('dotenv');
@@ -15,6 +16,22 @@ const prisma = new PrismaClient();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { username } });
+    if (!user || user.password !== password) {
+        return res.status(401).json({ message: 'Invalid username or password' });
+    }
+    res.json({ message: 'Login successful', token: jwt.sign({ username }, 'secret', { expiresIn: '1h' }) });
+});
+
+app.post('/api/register', async (req, res) => {
+    const { username, password } = req.body;
+    const user = await prisma.user.create({ data: { username, password } });
+    res.json({ message: 'User created', user });
+});
+
+
 async function needToBeAutenticated(req, res, next) {
     try {
         const token = req.headers['authorization'];
@@ -23,8 +40,10 @@ async function needToBeAutenticated(req, res, next) {
             return res.status(401).json({ message: 'Token is required' });
         }
 
-        if (token != "Bearer B") { // unauthorized
-            return res.status(401).json({ message: 'Unauthorized' });
+        try {
+            jwt.verify(token.split(' ')[1], secret);
+        } catch (error) {
+            return res.status(401).json({ message: 'Invalid token' });
         }
 
         next();
@@ -33,7 +52,10 @@ async function needToBeAutenticated(req, res, next) {
     }
 }
 
+const secret = 'secret';
+
 BigInt.prototype.toJSON = function () { return Number(this) }
+
 
 /**
  * @swagger
