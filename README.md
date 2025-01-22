@@ -8,15 +8,15 @@ Esta API fornece informações sobre países, incluindo os seus nomes, códigos,
 - José Romão- 74533
 
 ## Pré-requisitos
-- Node.js (versão 14 ou superior)
-- MySQL (versão 5.7 ou superior)
-- npm (gestor de pacotes do Node.js)
+- Node.js
+- MySQL
+- npm
 
 ## Configuração
 
 ### 1. Instalação das Dependências
 ```bash
-npm install @prisma/client express axios node-cron body-parser
+npm install 
 ```
 
 ### 2. Configuração da Base de Dados
@@ -28,8 +28,7 @@ PORT=3000
 
 2. Execute as migrações do Prisma:
 ```bash
-npx prisma generate
-npx prisma migrate dev
+migrations.ps1
 ```
 
 ### 3. População da Base de Dados
@@ -72,7 +71,7 @@ Authorization: Bearer B
 - **Endpoint**: GET /api/countries/capital
 - **Parâmetros Query**: capital
 - **Autenticação**: Obrigatória
-- **Exemplo**: `http://localhost:3000/api/countries/capital?capital=Lisboa`
+- **Exemplo**: `http://localhost:3000/api/countries/capital?capital=Lisbon`
 
 ### 5. Pesquisar por Moeda
 - **Endpoint**: GET /api/countries/currency
@@ -83,7 +82,7 @@ Authorization: Bearer B
 ### 6. Pesquisar População por País
 - **Endpoint**: GET /api/population/{country}
 - **Autenticação**: Obrigatória
-- **Exemplo**: `http://localhost:3000/api/population/Portugal`
+- **Exemplo**: `http://localhost:3000/api/population/30`
 
 ### 7. Pesquisar País por Código
 - **Endpoint**: GET /api/countries/{alpha2_code}
