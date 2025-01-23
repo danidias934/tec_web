@@ -8,6 +8,7 @@ async function main() {
     const response = await axios.get('https://restcountries.com/v3.1/all');
     // console.log("response data: ", response.data);
     console.log("response status: ", response.status);
+    // console.log("response data: ", response.data[0]);
 
     const countries = response.data;
 
@@ -62,7 +63,4 @@ async function main() {
     console.log(countries[0].population);
 }
 
-
-
-main();
-// cron.schedule('0 0 * * *', main);
+cron.schedule('0 0 * * *', main);

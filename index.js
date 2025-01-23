@@ -13,6 +13,24 @@ const prisma = new PrismaClient();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+async function needToBeAutenticated(req, res, next) {
+    try {
+        const token = req.headers['authorization'];
+
+        if (!token) {
+            return res.status(401).json({ message: 'Token is required' });
+        }
+
+        if (token != "Bearer B") { // unauthorized
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 BigInt.prototype.toJSON = function () { return Number(this) }
 
 /**
@@ -58,7 +76,7 @@ BigInt.prototype.toJSON = function () { return Number(this) }
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries', async (req, res) => {
+app.get('/api/countries', needToBeAutenticated, async (req, res) => {
     const countries = await prisma.country.findMany();
     console.log(countries);
 
@@ -130,7 +148,7 @@ app.get('/api/countries', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries/continent/:continent', async (req, res) => {
+app.get('/api/countries/continent/:continent', needToBeAutenticated, async (req, res) => {
     const continent = req.params.continent;
     const countries = await prisma.country.findMany({
         where: {
@@ -209,7 +227,7 @@ app.get('/api/countries/continent/:continent', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries/language', async (req, res) => {
+app.get('/api/countries/language', needToBeAutenticated, async (req, res) => {
     const language = req.query.language;
     const countries = await prisma.country.findMany({
         where: {
@@ -284,8 +302,9 @@ app.get('/api/countries/language', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries/capital', async (req, res) => {
+app.get('/api/countries/capital', needToBeAutenticated, async (req, res) => {
     const capital = req.query.capital;
+    console.log(capital);
     const countries = await prisma.country.findMany({
         where: {
             capital: capital
@@ -360,7 +379,7 @@ app.get('/api/countries/capital', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries/currency', async (req, res) => {
+app.get('/api/countries/currency', needToBeAutenticated, async (req, res) => {
     const currency = req.query.currency;
     const countries = await prisma.country.findMany({
         where: {
@@ -435,7 +454,7 @@ app.get('/api/countries/currency', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar países"
  */
-app.get('/api/countries/population/:population', async (req, res) => {
+app.get('/api/countries/population/:population', needToBeAutenticated, async (req, res) => {
     const population = req.params.population;
     const countries = await prisma.country.findMany({
         where: {
@@ -509,7 +528,7 @@ app.get('/api/countries/population/:population', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar o país"
  */
-app.get('/api/population/:country', async (req, res) => {
+app.get('/api/population/:country', needToBeAutenticated, async (req, res) => {
     let country = req.params.country;
     country = await prisma.country.findUnique({
         where: {
@@ -582,7 +601,7 @@ app.get('/api/population/:country', async (req, res) => {
  *                   type: string
  *                   example: "Erro ao recuperar o país"
  */
-app.get('/api/countries/:id', async (req, res) => {
+app.get('/api/countries/:id', needToBeAutenticated, async (req, res) => {
     const id = req.params.id;
     const country = await prisma.country.findUnique({
         where: {
@@ -593,7 +612,7 @@ app.get('/api/countries/:id', async (req, res) => {
 });
 
 
-app.get('/', (req, res) => {
+app.get('/', needToBeAutenticated, (req, res) => {
     res.send('Hello World');
 });
 

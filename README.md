@@ -1,146 +1,113 @@
 # API de Países
 
-Esta API fornece informações sobre países, incluindo seus nomes, códigos, moedas, línguas, capitais e população.
+Esta API fornece informações sobre países, incluindo os seus nomes, códigos, moedas, línguas, capitais e população.
+
+## Autores
+- Daniel Dias - 74529
+- Alexandre Rodrigues - 74549
+- José Romão- 74533
 
 ## Pré-requisitos
 - Node.js (versão 14 ou superior)
 - MySQL (versão 5.7 ou superior)
-- npm (gerenciador de pacotes do Node.js)
+- npm (gestor de pacotes do Node.js)
 
 ## Configuração
 
 ### 1. Instalação das Dependências
 ```bash
-npm install
+npm install @prisma/client express axios node-cron body-parser
 ```
 
-### 2. Configuração do Banco de Dados
-1. Crie um banco de dados MySQL:
-```sql
-CREATE DATABASE countries_db;
+### 2. Configuração da Base de Dados
+1. Crie um ficheiro `.env` na raiz do projeto com as seguintes configurações:
+```env
+DATABASE_URL="mysql://root:@localhost:3306/countries_db"
+PORT=3000
 ```
 
-2. Configure as credenciais do banco no arquivo `api.js`:
-```javascript
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '', // Sua senha do MySQL
-    database: 'countries_db'
-});
-```
-
-3. Execute o script `countries.js` para popular o banco de dados:
+2. Execute as migrações do Prisma:
 ```bash
-node countries.js
+npx prisma generate
+npx prisma migrate dev
 ```
 
-### 3. Iniciando a API
+### 3. População da Base de Dados
+Execute o script collector.js para popular a base de dados:
 ```bash
-node api.js
+node collector.js
+```
+
+### 4. Iniciar a API
+```bash
+node index.js
+```
+
+## Autenticação
+
+A API requer autenticação via token Bearer. Inclua o seguinte cabeçalho em todos os pedidos:
+```
+Authorization: Bearer B
 ```
 
 ## Endpoints Disponíveis
 
-### 1. Obter Todos os Países
+### 1. Listar Todos os Países
 - **Endpoint**: GET /api/countries
-- **Descrição**: Retorna toda a informação dos países com paginação avançada.
-- **Parâmetros Query**:
-  - page (opcional) - Número da página (padrão: 1)
-  - limit (opcional) - Quantidade de registros por página (padrão: 10)
-- **Exemplos**: 
-  - `http://localhost:3000/api/countries` (primeira página com 10 registros)
-  - `http://localhost:3000/api/countries?page=2` (segunda página)
-  - `http://localhost:3000/api/countries?page=1&limit=20` (primeira página com 20 registros)
-- **Resposta**:
-  ```json
-  {
-    "meta": {
-      "total_records": 250,        // Total de registros
-      "records_per_page": 10,      // Registros por página
-      "current_page": 1,           // Página atual
-      "total_pages": 25,           // Total de páginas
-      "showing": "Mostrando registros 1 até 10 de 250"
-    },
-    "navigation": {
-      "links": {
-        "self": "http://localhost:3000/api/countries?page=1&limit=10",
-        "first": "http://localhost:3000/api/countries?page=1&limit=10",
-        "last": "http://localhost:3000/api/countries?page=25&limit=10",
-        "next": "http://localhost:3000/api/countries?page=2&limit=10",
-        "prev": null
-      },
-      "has_next_page": true,
-      "has_previous_page": false,
-      "pages_remaining": 24,
-      "next_page": 2,
-      "previous_page": null
-    },
-    "data": [
-      // Array com os países da página atual
-    ]
-  }
-  ```
+- **Autenticação**: Obrigatória
+- **Exemplo**: `http://localhost:3000/api/countries`
 
 ### 2. Obter Países por Continente
 - **Endpoint**: GET /api/countries/continent/{continent}
-- **Parâmetros**: continent (obrigatório) - Nome do continente
+- **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/countries/continent/Europe`
 
-### 3. Obter Países por Idioma
+### 3. Pesquisar por Idioma
 - **Endpoint**: GET /api/countries/language
-- **Parâmetros Query**:
-  - language - Código da língua
-  - country - Nome do país para retornar seu idioma
-- **Exemplos**: 
-  - `http://localhost:3000/api/countries/language?language=Portuguese`
-  - `http://localhost:3000/api/countries/language?country=Portugal`
+- **Parâmetros Query**: language
+- **Autenticação**: Obrigatória
+- **Exemplo**: `http://localhost:3000/api/countries/language?language=Portuguese`
 
-### 4. Obter Países por Moeda
-- **Endpoint**: GET /api/countries/currency
-- **Parâmetros Query**:
-  - currency - Código da moeda
-  - country - Nome do país para retornar sua moeda
-- **Exemplos**:
-  - `http://localhost:3000/api/countries/currency?currency=EUR`
-  - `http://localhost:3000/api/countries/currency?country=Portugal`
-
-### 5. Obter Capitais
+### 4. Pesquisar por Capital
 - **Endpoint**: GET /api/countries/capital
-- **Parâmetros Query**:
-  - country (opcional) - Nome do país
-- **Exemplos**:
-  - `http://localhost:3000/api/countries/capital` (todas as capitais)
-  - `http://localhost:3000/api/countries/capital?country=Portugal`
+- **Parâmetros Query**: capital
+- **Autenticação**: Obrigatória
+- **Exemplo**: `http://localhost:3000/api/countries/capital?capital=Lisboa`
 
-### 6. Obter População
+### 5. Pesquisar por Moeda
+- **Endpoint**: GET /api/countries/currency
+- **Parâmetros Query**: currency
+- **Autenticação**: Obrigatória
+- **Exemplo**: `http://localhost:3000/api/countries/currency?currency=EUR`
+
+### 6. Pesquisar População por País
 - **Endpoint**: GET /api/population/{country}
-- **Parâmetros**: country (obrigatório) - Nome do país
+- **Autenticação**: Obrigatória
 - **Exemplo**: `http://localhost:3000/api/population/Portugal`
 
-## Estrutura do Banco de Dados
+### 7. Pesquisar País por Código
+- **Endpoint**: GET /api/countries/{alpha2_code}
+- **Autenticação**: Obrigatória
+- **Exemplo**: `http://localhost:3000/api/countries/PT`
 
-A tabela `countries` contém os seguintes campos:
-- id (INT, AUTO_INCREMENT, PRIMARY KEY)
-- nome (VARCHAR(255))
-- alpha2_code (VARCHAR(2))
-- alpha3_code (VARCHAR(3))
-- moeda (VARCHAR(255))
-- linguas (VARCHAR(255))
-- capital (VARCHAR(255))
+## Origem dos Dados
+Os dados são recolhidos da API REST Countries (https://restcountries.com/v3.1/all) através do script collector.js
+
+## Estrutura da Base de Dados
+A base de dados é gerida pelo Prisma ORM e contém uma tabela principal `country` com os seguintes campos:
+- nome (VARCHAR)
+- alpha2_code (VARCHAR, chave primária)
+- alpha3_code (VARCHAR)
+- moeda (VARCHAR)
+- linguas (VARCHAR)
+- capital (VARCHAR)
 - populacao (BIGINT)
-- continente (VARCHAR(255))
-
-## Scripts Disponíveis
-- `node countries.js`: Executa o script para popular o banco de dados
-- `node api.js`: Inicia o servidor da API com nodemon (auto-reload)
+- continente (VARCHAR)
 
 ## Tecnologias Utilizadas
 - Node.js
 - Express.js
+- Prisma ORM
 - MySQL
-- Axios (para buscar dados da API externa)
-- nodemon (desenvolvimento)
-
-## Fonte dos Dados
-Os dados são obtidos da API REST Countries (https://restcountries.com/v3.1/all) e armazenados localmente no MySQL.
+- Axios
+- node-cron (para recolha automática de dados)
